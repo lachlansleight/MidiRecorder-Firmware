@@ -11,6 +11,7 @@ struct Message {
 
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include "InputHandling.h"
 //Replace these with your WiFi credentials (2.4GHz only)
 //Also...please don't come to my house and hack my WiFi with these!
 const char* ssid     = "WhatFight4";
@@ -44,6 +45,8 @@ unsigned int messageCount = 0;
 #define PIN_LED_G 24
 #define PIN_LED_B 23
 
+int deltaMillis = 0;
+long lastMillis;
 
 
 void setLedColor(byte r, byte g, byte b) {
@@ -172,11 +175,15 @@ void setup() {
 }
 
 void loop() {
+    deltaMillis = int(millis() - lastMillis);
+    lastMillis = millis();
+    ButtonUpload.update(deltaMillis);
+
     //song auto-ends if there's been a certain amount of time passed with no new messages
     //todo - this should probably suspend if there are notes held. Maybe.
     if(runningSong) {
         songTime = (unsigned long)(millis() - songStartTime);
-        if(songTime - lastNoteTime > timeoutTime) {
+        if(songTime - lastNoteTime > timeoutTime || ButtonUpload.down) {
           endSong();
         }
     }
