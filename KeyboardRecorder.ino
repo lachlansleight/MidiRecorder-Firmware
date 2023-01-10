@@ -16,7 +16,8 @@ struct Message {
 //Also...please don't come to my house and hack my WiFi with these!
 const char* ssid     = "WhatFight4";
 const char* password = "dumplingsatnoon!";
-String server = "https://midirecorder.vercel.app";
+//String server = "https://midirecorder.vercel.app";
+String server = "http://192.168.20.30:3088";
 String path = "/api/upload";
 String mac = WiFi.macAddress();
 
@@ -270,71 +271,75 @@ void printMessage(Message message) {
 //uploads the current song buffer to the server to be further processed
 void uploadSong()
 {
-    if(WiFi.status()== WL_CONNECTED){
-        HTTPClient http;
+    if(WiFi.status() != WL_CONNECTED){
+      #ifdef DEBUG_MODE
+      Serial.println("WiFi Disconnected");
+      #endif
+      errorFlash();
+    }
 
-        #ifdef DEBUG_MODE
-        Serial.println("Making request to " + (server + path));
-        #endif
-        http.begin((server + path).c_str());
-        
-        //data
-        http.addHeader("Content-Type", "application/octet-stream");
-        http.addHeader("Authorization", "Basic " + mac);
-        int httpResponseCode = http.POST(messageBuffer, messageCount * 5);
-        
-        if (httpResponseCode>0) {
-            if(httpResponseCode >= 200 && httpResponseCode <= 299) {
-                #ifdef DEBUG_MODE
-                String payload = http.getString();
-                Serial.print("HTTP Response: ");
-                Serial.print(httpResponseCode);
-                Serial.print(" - ");
-                Serial.println(payload);
+    boolean manualUpload = ButtonUpload.down;
     
-                wifiSuccessFlash();
+    HTTPClient http;
+
+    #ifdef DEBUG_MODE
+    Serial.println("Making request to " + (server + path));
+    #endif
+    http.begin((server + path).c_str());
+    
+    //data
+    http.addHeader("Content-Type", "application/octet-stream");
+    http.addHeader("Authorization", "Basic " + mac);
+    int httpResponseCode = http.POST(messageBuffer, messageCount * 5);
+    
+    if (httpResponseCode>0) {
+        if(httpResponseCode >= 200 && httpResponseCode <= 299) {
+            #ifdef DEBUG_MODE
+            String payload = http.getString();
+            Serial.print("HTTP Response: ");
+            Serial.print(httpResponseCode);
+            Serial.print(" - ");
+            Serial.println(payload);
+
+            wifiSuccessFlash();
+            #else
+            wifiSuccessFlash();
+            #endif
+        } else {
+            if(httpResponseCode >= 500) {
+                #ifdef DEBUG_MODE
+                Serial.println("Error - server error " + String(httpResponseCode));
                 #endif
+                errorFlash();
             } else {
-                if(httpResponseCode >= 500) {
-                    #ifdef DEBUG_MODE
-                    Serial.println("Error - server error " + String(httpResponseCode));
-                    #endif
-                    errorFlash();
-                } else {
-                    #ifdef DEBUG_MODE
-                    Serial.println("Error - request error " + String(httpResponseCode));
-                    #endif
-                    errorFlash();
-                }
+                #ifdef DEBUG_MODE
+                Serial.println("Error - request error " + String(httpResponseCode));
+                #endif
+                errorFlash();
             }
         }
-        else {
-            #ifdef DEBUG_MODE
-            if(httpResponseCode == -1) Serial.println("Error - Connection_Refused (Code -1)");
-            else if(httpResponseCode == -2) Serial.println("Error - Send Header Failed (Code -2)");
-            else if(httpResponseCode == -3) Serial.println("Error - Send Payload Failed (Code -3)");
-            else if(httpResponseCode == -4) Serial.println("Error - Not Connected (Code -4)");
-            else if(httpResponseCode == -5) Serial.println("Error - Connection Lost (Code -5)");
-            else if(httpResponseCode == -6) Serial.println("Error - No Stream (Code -6)");
-            else if(httpResponseCode == -7) Serial.println("Error - No Http Server (Code -7)");
-            else if(httpResponseCode == -8) Serial.println("Error - Not Enough RAM (Code -8)");
-            else if(httpResponseCode == -9) Serial.println("Error - Encoding (Code -9)");
-            else if(httpResponseCode == -10) Serial.println("Error - Stream Write (Code -10)");
-            else if(httpResponseCode == -11) Serial.println("Error - Read Timeout (Code -11)");
-            else Serial.println("Error - Unexpected error code " + String(httpResponseCode));
-            #endif
-
-            //flash LED white/red, then fade
-            errorFlash();
-        }
-        // Free resources
-        http.end();
-    } else {
+    }
+    else {
         #ifdef DEBUG_MODE
-        Serial.println("WiFi Disconnected");
+        if(httpResponseCode == -1) Serial.println("Error - Connection_Refused (Code -1)");
+        else if(httpResponseCode == -2) Serial.println("Error - Send Header Failed (Code -2)");
+        else if(httpResponseCode == -3) Serial.println("Error - Send Payload Failed (Code -3)");
+        else if(httpResponseCode == -4) Serial.println("Error - Not Connected (Code -4)");
+        else if(httpResponseCode == -5) Serial.println("Error - Connection Lost (Code -5)");
+        else if(httpResponseCode == -6) Serial.println("Error - No Stream (Code -6)");
+        else if(httpResponseCode == -7) Serial.println("Error - No Http Server (Code -7)");
+        else if(httpResponseCode == -8) Serial.println("Error - Not Enough RAM (Code -8)");
+        else if(httpResponseCode == -9) Serial.println("Error - Encoding (Code -9)");
+        else if(httpResponseCode == -10) Serial.println("Error - Stream Write (Code -10)");
+        else if(httpResponseCode == -11) Serial.println("Error - Read Timeout (Code -11)");
+        else Serial.println("Error - Unexpected error code " + String(httpResponseCode));
         #endif
+
+        //flash LED white/red, then fade
         errorFlash();
     }
+    // Free resources
+    http.end();
 }
 
 void startSong()
@@ -367,18 +372,23 @@ void endSong()
 
 void handleNoteOn(byte channel, byte pitch, byte velocity)
 {
+    if(channel != 1) return;
     //Serial.println("ON\t" + String(channel) + "\t" + String(pitch) + "\t" + String(velocity));
     addMessage(true, pitch, velocity, false);
 }
 
 void handleNoteOff(byte channel, byte pitch, byte velocity)
 {
+    if(channel != 1) return;
+
     //Serial.println("OFF\t" + String(channel) + "\t" + String(pitch) + "\t" + String(velocity));
     addMessage(false, pitch, velocity, false);
 }
 
 void handleControlChange(byte channel, byte number, byte value)
 {
+    if(channel != 1) return;
+    
     //Serial.println("CC\t" + String(channel) + "\t" + String(number) + "\t" + String(value));
     if(number == 64) {
         //dampen pedal
