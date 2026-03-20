@@ -1,12 +1,16 @@
 # MIDI Recorder Firmware + CAD
 
-My MIDI recorder is a small device that lives plugged into a MIDI instrument (specifically a digital piano) and automatically records and uploads everything played on it for later reference. The core idea is that no input is required, and no feedback is given that recording has started/stopped, so you get 'recording-by-default'. A webserver automatically processes recordings and makes them available for playback via a frontend website.
+My MIDI recorder is a small device that lives plugged into a MIDI instrument (specifically a digital piano) and automatically records and uploads everything played on it for later reference.
+The core idea is that no input is required, and no feedback is given that recording has started/stopped, so you get 'recording-by-default'.
+A webserver automatically processes recordings and makes them available for playback via a frontend website.
 
 ---
 
-This is the firmware and CAD files for a device that I'm building that automatically records everything I play on my piano. The repository for the server and frontend website can be found [here](https://github.com/lachlansleight/MidiRecorder-Server)
+This is the firmware and CAD files for a device that I'm building that automatically records everything I play on my piano.
+The repository for the server and frontend website can be found [here](https://github.com/lachlansleight/MidiRecorder-Server)
 
-The device is pretty simple - it's an ESP32, some power regulation and MIDI IN / MIDI THRU. Check back soon, I'm actively working on this project right now so CAD files for the enclosure should be coming soon!
+The device is pretty simple - it's an ESP32, some power regulation and MIDI IN / MIDI THRU.
+Check back soon, I'm actively working on this project right now so CAD files for the enclosure should be coming soon!
 
 ![MidiRecorder Circuitboard Render](https://github.com/lachlansleight/KeyboardRecorder-Firmware/raw/main/CAD/PCB_v1_Render.png)
 

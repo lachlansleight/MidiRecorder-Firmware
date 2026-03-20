@@ -11,15 +11,20 @@ struct Message {
 
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <WiFiClientSecure.h>
+#include <esp_crt_bundle.h>
 #include "InputHandling.h"
 //Replace these with your WiFi credentials (2.4GHz only)
 //Also...please don't come to my house and hack my WiFi with these!
-const char* ssid     = "WhatFight4";
-const char* password = "dumplingsatnoon!";
-//String server = "https://midirecorder.vercel.app";
-String server = "http://192.168.20.30:3088";
+const char* ssid     = "Realtime";
+const char* password = "east4east";
+String server = "https://piano.of.glass";
+//String server = "http://192.168.1.100:3088";
 String path = "/api/upload";
 String mac = WiFi.macAddress();
+
+extern const uint8_t x509_crt_bundle_start[] asm("_binary_x509_crt_bundle_start");
+extern const uint8_t x509_crt_bundle_end[]   asm("_binary_x509_crt_bundle_end");
 
 #include <MIDI.h>
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial2, MIDI);
@@ -61,7 +66,7 @@ void errorFlash()
     //flash LED white/red, then fade
     
     byte last = 255;
-    for(byte i = 255; i >= 0; i--) {
+    for(byte i = 255; i > 0; i--) {
         if(i > last) break;
         last = i;
         
@@ -69,7 +74,7 @@ void errorFlash()
         delay(1);
     }
     last = 0;
-    for(byte i = 0; i <= 255; i++) {
+    for(byte i = 0; i < 255; i++) {
         if(i < last) break;
         last = i;
         
@@ -77,7 +82,7 @@ void errorFlash()
         delay(1);
     }
     last = 255;
-    for(byte i = 255; i >= 0; i--) {
+    for(byte i = 255; i > 0; i--) {
         if(i > last) break;
         last = i;
         
@@ -86,7 +91,7 @@ void errorFlash()
     }
     delay(500);
     last = 255;
-    for(byte i = 255; i >= 0; i--) {
+    for(byte i = 255; i > 0; i--) {
         if(i > last) break;
         last = i;
         
@@ -100,7 +105,7 @@ void errorFlash()
 void wifiSuccessFlash()
 {
     byte last = 255;
-    for(byte i = 255; i >= 0; i--) {
+    for(byte i = 255; i > 0; i--) {
         if(i > last) break;
         last = i;
         
@@ -108,7 +113,7 @@ void wifiSuccessFlash()
         delay(1);
     }
     last = 255;
-    for(byte i = 255; i >= 0; i--) {
+    for(byte i = 255; i > 0; i--) {
         if(i > last) break;
         last = i;
         
@@ -158,6 +163,12 @@ void setup() {
         Serial.print(".");
         #endif
     }
+    WiFiClientSecure client;
+
+    // NEW 3.x form: pass bundle pointer + size
+    size_t bundleSize = (size_t)(x509_crt_bundle_end - x509_crt_bundle_start);
+    client.setCACertBundle(x509_crt_bundle_start, bundleSize);
+    
     wifiSuccessFlash();
 
     #ifdef DEBUG_MODE
@@ -192,9 +203,9 @@ void loop() {
 }
 
 void printByte(byte in) {
-    byte i = 7;
-    while(i >= 0 && i < 8) {
-        Serial.print(bitRead(in, i));
+    byte i = 8;
+    while(i > 0) {
+        Serial.print(bitRead(in, i - 1));
         i--;
     }
 }
@@ -278,7 +289,7 @@ void uploadSong()
       errorFlash();
     }
 
-    boolean manualUpload = ButtonUpload.down;
+    //boolean manualUpload = ButtonUpload.down;
     
     HTTPClient http;
 
